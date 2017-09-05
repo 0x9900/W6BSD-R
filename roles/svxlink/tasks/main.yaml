@@ -1,0 +1,46 @@
+#
+# roles/base/tasks
+# Fred C. (W6BSD)
+#
+---
+
+- name: Installing svxlink package.
+  package:
+    name: svxlink
+    state: lstest
+
+- name: Configure svxlink.
+  template:
+    src: svxlink.conf.j2
+    dest: /etc/svxlink/svxlink.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    restart svxlink
+
+- name: Configure EchoLink module
+  template:
+    src: ModuleEchoLink.conf.j2
+    dest: /etc/svxlink/svxlink.d/ModuleEchoLink.conf.j2
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    restart svxlink
+
+- name: Copy some of the modified .tcl files.
+  copy:
+    src: events.d/{{ item }}
+    dest: /usr/share/svxlink/events.d/{{ item }}
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    restart svxlink
+
+- name: Making sure svxlink is enabled and running
+  service:
+    name: svxlink
+    state: started
+    enabled: yes

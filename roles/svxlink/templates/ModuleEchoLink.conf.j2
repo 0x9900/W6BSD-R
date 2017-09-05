@@ -1,0 +1,23 @@
+[ModuleEchoLink]
+NAME=EchoLink
+ID=2
+TIMEOUT=60
+REJECT_INCOMING=^.*-[RL]$
+#REJECT_INCOMING=^(.*[A-Za-z0-9].*)$
+REJECT_CONF=1
+CHECK_NR_CONNECTS=2,300,120
+SERVERS=servers.echolink.org
+CALLSIGN={{ node.callsign }}-R
+PASSWORD={{ node.password }}
+SYSOPNAME=N6NFI Repeater
+LOCATION=N6NFI Repeater 9AM Talk Net
+MAX_QSOS=11
+MAX_CONNECTIONS=13
+LINK_IDLE_TIMEOUT=900
+DESCRIPTION="You are connected to an SVXLink node,\n"
+            "Sysop: Fred (w6bsd)\n"
+            "QRG:   Simplex link on 145.230 MHz\n"
+            "CTCSS: 100\n"
+            "Sysop: Fred (W6BSD)\n"
+            "QTH:   Redwood City, CA (CM87vl)\n"
+            "Trx:   BaoFang GT3TP, 5 W\n"
