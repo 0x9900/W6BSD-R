@@ -130,10 +130,13 @@ proc send_short_ident {{hour -1} {minute -1}} {
   global mycall;
   variable CFG_TYPE;
 
-  spellWord $mycall;
-  if {$CFG_TYPE == "Repeater"} {
-    playMsg "Core" "repeater";
-  }
+  # spellWord $mycall;
+  CW::play ".";
+  CW::play $mycall;
+
+  # if {$CFG_TYPE == "Repeater"} {
+  #  playMsg "Core" "repeater";
+  # }
   playSilence 500;
 }
 
