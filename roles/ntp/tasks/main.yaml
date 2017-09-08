@@ -1,0 +1,23 @@
+#
+# roles/base/tasks
+# Fred C. (W6BSD)
+#
+---
+
+- name: Ensure NTP-related packages are installed.
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - ntp
+    - tzdata
+
+- name: Set timezone
+  timezone:
+    name: America/Los_Angeles
+
+- name: Ensure NTP is running and enabled as configured.
+  service:
+    name: ntp
+    state: started
+    enabled: yes

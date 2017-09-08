@@ -1,0 +1,51 @@
+#
+# roles/base/tasks
+# Fred C. (W6BSD)
+#
+---
+
+- apt_repository:
+    repo: 'ppa:felix.lechner/hamradio'
+    codename: 'xenial'
+    update_cache: yes
+
+- name: Installing svxlink package.
+  package:
+    name: svxlink-server
+    state: present
+
+- name: Configure svxlink.
+  template:
+    src: svxlink.conf.j2
+    dest: /etc/svxlink/svxlink.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    restart svxlink
+
+- name: Configure EchoLink module
+  template:
+    src: ModuleEchoLink.conf.j2
+    dest: /etc/svxlink/svxlink.d/ModuleEchoLink.conf.j2
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    restart svxlink
+
+- name: Copy some of the modified .tcl files.
+  copy:
+    src: events.d
+    dest: /usr/share/svxlink
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    restart svxlink
+
+- name: Making sure svxlink is enabled and running
+  service:
+    name: svxlink
+    state: started
+    enabled: yes

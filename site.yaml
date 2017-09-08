@@ -1,0 +1,14 @@
+#
+# Fred Cirera <fred@bsdhost.net>
+#
+# Home router deployment and management.
+#
+---
+
+- name: SVXLink installation and configuration.
+  hosts:
+    all
+  roles:
+    - { role: base,    tags: base }
+    - { role: ntp,     tags: ntp }
+    - { role: svxlink, tags: svxlink }

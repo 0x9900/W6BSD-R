@@ -1,0 +1,12 @@
+#
+# hosts
+#
+
+192.168.20.125
+
+[rpi]
+192.168.20.125
+
+[all:vars]
+ansible_ssh_user=fred
+ansible_private_key_file=/Users/fred/.ssh/id_rsa

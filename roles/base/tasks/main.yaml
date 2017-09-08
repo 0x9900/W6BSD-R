@@ -1,0 +1,13 @@
+#
+# roles/base/tasks
+# Fred C. (W6BSD)
+#
+---
+
+- name: Install the base packages
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - ansible
+    - aptitude
