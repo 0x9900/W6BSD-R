@@ -11,3 +11,13 @@
   with_items:
     - ansible
     - aptitude
+
+- name: add users
+  user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    comment: "{{ item.gcos }}"
+    groups: adm,sudo,plugdev,i2c,spi
+    state: present
+  with_items:
+    "{{ accounts }}"
