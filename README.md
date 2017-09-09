@@ -7,7 +7,7 @@ tested the playbook on a Ubuntu distro but it should work on Debian.
 
 To run the playbook use the command:
 ```
-dansible-playbook site.yaml
+ansible-playbook site.yaml
 ```
 
 ## The Vault:
