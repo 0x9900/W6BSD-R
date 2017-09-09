@@ -4,17 +4,18 @@
 #
 ---
 
-- apt_repository:
+- name: configuring the hamradio repository
+  apt_repository:
     repo: 'ppa:felix.lechner/hamradio'
     codename: 'xenial'
     update_cache: yes
 
-- name: Installing svxlink package.
+- name: Installing svxlink package
   package:
     name: svxlink-server
     state: present
 
-- name: Configure svxlink.
+- name: Configure svxlink
   template:
     src: svxlink.conf.j2
     dest: /etc/svxlink/svxlink.conf
@@ -34,7 +35,7 @@
   notify:
     restart svxlink
 
-- name: Copy some of the modified .tcl files.
+- name: Copy some of the modified .tcl files
   copy:
     src: events.d
     dest: /usr/share/svxlink

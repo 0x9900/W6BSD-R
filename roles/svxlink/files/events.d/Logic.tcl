@@ -50,8 +50,14 @@ variable receiver_on 0;
 # Executed when the SvxLink software is started
 #
 proc startup {} {
-  #playMsg "Core" "online"
-  #send_ident
+  variable prev_ident;
+  variable need_ident;
+  #playMsg "EchoLink" "online";
+  send_ident
+  # we just identified ourselves, we don't need to re-identify for a while.
+  set now [clock seconds];
+  set prev_ident $now;
+  set need_ident 0;
 }
 
 
@@ -247,6 +253,7 @@ proc transmit {is_on} {
     set need_ident 1;
   }
   set transmit_on $is_on;
+  dbg "Transit is $transmit_on";
 }
 
 
@@ -261,6 +268,7 @@ proc squelch_open {rx_id is_open} {
   #puts "The squelch is $is_open on RX $rx_id";
   set sql_rx_id $rx_id;
   set receiver_on $is_open;
+  dbg "Receive is $receiver_on";
 }
 
 
@@ -323,17 +331,21 @@ proc checkPeriodicIdentify {} {
   variable receiver_on;
   global logic_name;
 
+  dbg "need_ident $need_ident";
   if {$need_ident == 0} {
     return;
   }
 
+  dbg "transmit_on $transmit_on";
+  dbg "receiver_on $receiver_on";
   if {$transmit_on || $receiver_on} {
     return;
   }
 
   set now [clock seconds];
 
-  if {$prev_ident + $ident_interval < $now} {
+  dbg "prev_ident $prev_ident + ident_interval $ident_interval < now $now";
+  if {$prev_ident + $ident_interval <= $now} {
     puts "$logic_name: Sending identification...";
     send_ident
     set prev_ident $now;
@@ -443,10 +455,24 @@ proc logic_online {online} {
 #
 ##############################################################################
 
+#
+# By default the ident interval is 10 minutes or 600 seconds.
+#
 if {[info exists CFG_SHORT_IDENT_INTERVAL] && $CFG_SHORT_IDENT_INTERVAL > 0} {
-    set ident_interval $CFG_SHORT_IDENT_INTERVAL * 60;
+  set ident_interval [expr {$CFG_SHORT_IDENT_INTERVAL * 60}];
 } else {
-    set ident_interval 60 * 60
+  set ident_interval 600;
+}
+
+# Output debug only when the user set the environment variable
+# DEBUG=1
+if {([info exists env(DEBUG)] && $env(DEBUG)) ||
+    ([info exists CFG_DEBUG] && $CFG_DEBUG != 0)} {
+  proc dbg {msg} {
+    puts ">>> $msg";
+  }
+} else {
+  proc dbg {msg} {}
 }
 
 

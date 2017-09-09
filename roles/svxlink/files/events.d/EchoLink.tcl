@@ -158,7 +158,7 @@ proc status_report {} {
   variable num_connected_stations;
   variable module_name;
   global active_module;
-  
+
   if {$active_module == $module_name} {
     playNumber $num_connected_stations;
     playMsg "connected_stations";
@@ -257,7 +257,7 @@ proc connected {} {
 # connection will be terminated.
 #
 proc link_inactivity_timeout {} {
-  playMsg "timeout";
+  # playMsg "timeout";
 }
 
 
@@ -515,8 +515,8 @@ proc remote_timeout {} {
 #
 proc squelch_open {is_open} {
   if {!$is_open} {
-    playSilence 200
-    playTone 1000 100 100
+    playSilence 200;
+    playTone 1000 100 100;
   }
 }
 

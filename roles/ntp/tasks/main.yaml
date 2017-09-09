@@ -16,6 +16,14 @@
   timezone:
     name: America/Los_Angeles
 
+- name: make ntpd executable
+  file:
+    path: /usr/sbin/ntpd
+    mode: 0755
+    owner: root
+    group: root
+
+
 - name: Ensure NTP is running and enabled as configured.
   service:
     name: ntp
