@@ -2,6 +2,14 @@
 
 W6BSD-R: EchoLink Node installation and configuration for N6NFI repeater.
 
+This playbook install and configure svxlink on a RaspberryPi. I have
+tested the playbook on a Ubuntu distro but it should work on Debian.
+
+To run the playbook use the command:
+```
+dansible-playbook site.yaml
+```
+
 ## The Vault:
 
 The vault file contains all the private information. Here is how the

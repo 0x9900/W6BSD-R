@@ -25,17 +25,9 @@ variable min_time_between_ident 120;
 # Short and long identification intervals. They are setup from config
 # variables below.
 #
-variable short_ident_interval 0;
-variable long_ident_interval 0;
+variable ident_interval 0;
 
 
-#
-# The ident_only_after_tx variable indicates if identification is only to
-# occur after the node has transmitted. The variable is setup below from the
-# configuration variable with the same name.
-# The need_ident variable indicates if identification is needed.
-#
-variable ident_only_after_tx 0;
 variable need_ident 0;
 
 #
@@ -49,11 +41,23 @@ variable timer_tick_subscribers [list];
 variable sql_rx_id 0;
 
 #
+# used by checkPeriodicIdentify to determine if there is a transmission going on.
+#
+variable transmit_on 0;
+variable receiver_on 0;
+
+#
 # Executed when the SvxLink software is started
 #
 proc startup {} {
-  #playMsg "Core" "online"
-  #send_short_ident
+  variable prev_ident;
+  variable need_ident;
+  #playMsg "EchoLink" "online";
+  send_ident
+  # we just identified ourselves, we don't need to re-identify for a while.
+  set now [clock seconds];
+  set prev_ident $now;
+  set need_ident 0;
 }
 
 
@@ -68,70 +72,23 @@ proc no_such_module {module_id} {
 
 
 #
-# Executed when a manual identification is initiated with the * DTMF code
+# Executed when a manual identification is initiated with the * DTMF
+# code
 #
 proc manual_identification {} {
-  global mycall;
-  global report_ctcss;
-  global active_module;
-  global loaded_modules;
-  variable CFG_TYPE;
-  variable prev_ident;
-
-  set epoch [clock seconds];
-  set hour [clock format $epoch -format "%k"];
-  regexp {([1-5]?\d)$} [clock format $epoch -format "%M"] -> minute;
-  set prev_ident $epoch;
-
-  playMsg "Core" "online";
-  spellWord $mycall;
-  if {$CFG_TYPE == "Repeater"} {
-    playMsg "Core" "repeater";
-  }
-  playSilence 250;
-  playMsg "Core" "the_time_is";
-  playTime $hour $minute;
-  playSilence 250;
-  if {$report_ctcss > 0} {
-    playMsg "Core" "pl_is";
-    playNumber $report_ctcss;
-    playMsg "Core" "hz";
-    playSilence 300;
-  }
-  if {$active_module != ""} {
-    playMsg "Core" "active_module";
-    playMsg $active_module "name";
-    playSilence 250;
-    set func "::";
-    append func $active_module "::status_report";
-    if {"[info procs $func]" ne ""} {
-      $func;
-    }
-  } else {
-    foreach module [split $loaded_modules " "] {
-      set func "::";
-      append func $module "::status_report";
-      if {"[info procs $func]" ne ""} {
-	$func;
-      }
-    }
-  }
-  playMsg "Default" "press_0_for_help"
-  playSilence 250;
+  return 0;
 }
 
 
 #
 # Executed when a short identification should be sent
-#   hour    - The hour on which this identification occur
-#   minute  - The hour on which this identification occur
 #
-proc send_short_ident {{hour -1} {minute -1}} {
+proc send_ident {} {
   global mycall;
   variable CFG_TYPE;
 
   # spellWord $mycall;
-  CW::play ".";
+  CW::play " ";
   CW::play $mycall;
 
   # if {$CFG_TYPE == "Repeater"} {
@@ -140,47 +97,9 @@ proc send_short_ident {{hour -1} {minute -1}} {
   playSilence 500;
 }
 
-
 #
-# Executed when a long identification (e.g. hourly) should be sent
-#   hour    - The hour on which this identification occur
-#   minute  - The hour on which this identification occur
-#
-proc send_long_ident {hour minute} {
-  global mycall;
-  global loaded_modules;
-  global active_module;
-  variable CFG_TYPE;
-
-  spellWord $mycall;
-  if {$CFG_TYPE == "Repeater"} {
-    playMsg "Core" "repeater";
-  }
-  playSilence 500;
-
-  playMsg "Core" "the_time_is";
-  playSilence 100;
-  playTime $hour $minute;
-  playSilence 500;
-
-    # Call the "status_report" function in all modules if no module is active
-  if {$active_module == ""} {
-    foreach module [split $loaded_modules " "] {
-      set func "::";
-      append func $module "::status_report";
-      if {"[info procs $func]" ne ""} {
-        $func;
-      }
-    }
-  }
-
-  playSilence 500;
-}
-
-
-#
-# Executed when the squelch just have closed and the RGR_SOUND_DELAY timer has
-# expired.
+# Executed when the squelch just have closed and the RGR_SOUND_DELAY
+# timer has expired.
 #
 proc send_rgr_sound {} {
   variable sql_rx_id;
@@ -230,8 +149,8 @@ proc macro_module_not_found {} {
 
 
 #
-# Executed when the activation of the module specified in the macro command
-# failed.
+# Executed when the activation of the module specified in the macro
+# command failed.
 #
 proc macro_module_activation_failed {} {
   playMsg "Core" "operation_failed";
@@ -329,9 +248,12 @@ proc transmit {is_on} {
   #puts "Turning the transmitter $is_on";
   variable prev_ident;
   variable need_ident;
+  variable transmit_on;
   if {$is_on && ([clock seconds] - $prev_ident > 5)} {
     set need_ident 1;
   }
+  set transmit_on $is_on;
+  dbg "Transit is $transmit_on";
 }
 
 
@@ -342,8 +264,11 @@ proc transmit {is_on} {
 #
 proc squelch_open {rx_id is_open} {
   variable sql_rx_id;
+  variable receiver_on;
   #puts "The squelch is $is_open on RX $rx_id";
   set sql_rx_id $rx_id;
+  set receiver_on $is_open;
+  dbg "Receive is $receiver_on";
 }
 
 
@@ -356,7 +281,6 @@ proc squelch_open {rx_id is_open} {
 # return 0 to make SvxLink continue processing as normal.
 #
 proc dtmf_digit_received {digit duration} {
-  #puts "DTMF digit \"$digit\" detected with duration $duration ms";
   return 0;
 }
 
@@ -365,40 +289,7 @@ proc dtmf_digit_received {digit duration} {
 # Executed when a DTMF command has been received
 #   cmd - The command
 #
-# Return 1 to hide the command from further processing is SvxLink or
-# return 0 to make SvxLink continue processing as normal.
-#
-# This function can be used to implement your own custom commands or to disable
-# DTMF commands that you do not want users to execute.
 proc dtmf_cmd_received {cmd} {
-  #global active_module
-
-  # Example: Ignore all commands starting with 3 in the EchoLink module
-  #if {$active_module == "EchoLink"} {
-  #  if {[string index $cmd 0] == "3"} {
-  #    puts "Ignoring random connect command for module EchoLink: $cmd"
-  #    return 1
-  #  }
-  #}
-
-  # Handle the "force core command" mode where a command is forced to be
-  # executed by the core command processor instead of by an active module.
-  # The "force core command" mode is entered by prefixing a command by a star.
-  #if {$active_module != "" && [string index $cmd 0] != "*"} {
-  #  return 0
-  #}
-  #if {[string index $cmd 0] == "*"} {
-  #  set cmd [string range $cmd 1 end]
-  #}
-
-  # Example: Custom command executed when DTMF 99 is received
-  #if {$cmd == "99"} {
-  #  puts "Executing external command"
-  #  playMsg "Core" "online"
-  #  exec ls &
-  #  return 1
-  #}
-
   return 0
 }
 
@@ -430,54 +321,35 @@ proc addTimerTickSubscriber {func} {
 
 #
 # Should be executed once every whole minute to check if it is time to
-# identify. Not exactly an event function. This function handle the
-# identification logic and call the send_short_ident or send_long_ident
-# functions when it is time to identify.
+# identify.
 #
 proc checkPeriodicIdentify {} {
   variable prev_ident;
-  variable short_ident_interval;
-  variable long_ident_interval;
-  variable min_time_between_ident;
-  variable ident_only_after_tx;
+  variable ident_interval;
   variable need_ident;
+  variable transmit_on;
+  variable receiver_on;
   global logic_name;
 
-  if {$short_ident_interval == 0} {
+  dbg "need_ident $need_ident";
+  if {$need_ident == 0} {
+    return;
+  }
+
+  dbg "transmit_on $transmit_on";
+  dbg "receiver_on $receiver_on";
+  if {$transmit_on || $receiver_on} {
     return;
   }
 
   set now [clock seconds];
-  set hour [clock format $now -format "%k"];
-  regexp {([1-5]?\d)$} [clock format $now -format "%M"] -> minute;
 
-  set short_ident_now \
-      	    [expr {($hour * 60 + $minute) % $short_ident_interval == 0}];
-  set long_ident_now 0;
-  if {$long_ident_interval != 0} {
-    set long_ident_now \
-      	    [expr {($hour * 60 + $minute) % $long_ident_interval == 0}];
-  }
-
-  if {$long_ident_now} {
-    puts "$logic_name: Sending long identification...";
-    send_long_ident $hour $minute;
+  dbg "prev_ident $prev_ident + ident_interval $ident_interval < now $now";
+  if {$prev_ident + $ident_interval <= $now} {
+    puts "$logic_name: Sending identification...";
+    send_ident
     set prev_ident $now;
     set need_ident 0;
-  } else {
-    if {$now - $prev_ident < $min_time_between_ident} {
-      return;
-    }
-    if {$ident_only_after_tx && !$need_ident} {
-      return;
-    }
-
-    if {$short_ident_now} {
-      puts "$logic_name: Sending short identification...";
-      send_short_ident $hour $minute;
-      set prev_ident $now;
-      set need_ident 0;
-    }
   }
 }
 
@@ -583,27 +455,25 @@ proc logic_online {online} {
 #
 ##############################################################################
 
-if [info exists CFG_SHORT_IDENT_INTERVAL] {
-  if {$CFG_SHORT_IDENT_INTERVAL > 0} {
-    set short_ident_interval $CFG_SHORT_IDENT_INTERVAL;
-  }
+#
+# By default the ident interval is 10 minutes or 600 seconds.
+#
+if {[info exists CFG_SHORT_IDENT_INTERVAL] && $CFG_SHORT_IDENT_INTERVAL > 0} {
+  set ident_interval [expr {$CFG_SHORT_IDENT_INTERVAL * 60}];
+} else {
+  set ident_interval 600;
 }
 
-if [info exists CFG_LONG_IDENT_INTERVAL] {
-  if {$CFG_LONG_IDENT_INTERVAL > 0} {
-    set long_ident_interval $CFG_LONG_IDENT_INTERVAL;
-    if {$short_ident_interval == 0} {
-      set short_ident_interval $long_ident_interval;
-    }
+# Output debug only when the user set the environment variable
+# DEBUG=1
+if {([info exists env(DEBUG)] && $env(DEBUG)) ||
+    ([info exists CFG_DEBUG] && $CFG_DEBUG != 0)} {
+  proc dbg {msg} {
+    puts ">>> $msg";
   }
+} else {
+  proc dbg {msg} {}
 }
-
-if [info exists CFG_IDENT_ONLY_AFTER_TX] {
-  if {$CFG_IDENT_ONLY_AFTER_TX > 0} {
-    set ident_only_after_tx $CFG_IDENT_ONLY_AFTER_TX;
-  }
-}
-
 
 
 # end of namespace
