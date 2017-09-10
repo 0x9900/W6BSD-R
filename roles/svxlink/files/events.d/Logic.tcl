@@ -344,13 +344,13 @@ proc checkPeriodicIdentify {} {
 
   set now [clock seconds];
 
-  dbg "prev_ident $prev_ident + ident_interval $ident_interval < now $now";
   if {$prev_ident + $ident_interval <= $now} {
     puts "$logic_name: Sending identification...";
     send_ident
     set prev_ident $now;
     set need_ident 0;
   }
+  dbg "prev_ident $prev_ident + ident_interval $ident_interval < now $now";
 }
 
 
