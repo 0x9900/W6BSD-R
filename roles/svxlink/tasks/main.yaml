@@ -28,7 +28,7 @@
 - name: Configure EchoLink module
   template:
     src: ModuleEchoLink.conf.j2
-    dest: /etc/svxlink/svxlink.d/ModuleEchoLink.conf.j2
+    dest: /etc/svxlink/svxlink.d/ModuleEchoLink.conf
     owner: root
     group: root
     mode: 0644
