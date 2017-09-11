@@ -26,8 +26,6 @@ variable min_time_between_ident 120;
 # variables below.
 #
 variable ident_interval 0;
-
-
 variable need_ident 0;
 
 #
@@ -55,11 +53,9 @@ proc startup {} {
   #playMsg "EchoLink" "online";
   send_ident
   # we just identified ourselves, we don't need to re-identify for a while.
-  set now [clock seconds];
-  set prev_ident $now;
+  set prev_ident [clock seconds];
   set need_ident 0;
 }
-
 
 #
 # Executed when a specified module could not be found
@@ -76,6 +72,12 @@ proc no_such_module {module_id} {
 # code
 #
 proc manual_identification {} {
+  variable prev_ident;
+  variable need_ident;
+  send_ident
+  # we just identified ourselves, we don't need to re-identify for a while.
+  set prev_ident [clock seconds];
+  set need_ident 0;
   return 0;
 }
 
@@ -87,13 +89,10 @@ proc send_ident {} {
   global mycall;
   variable CFG_TYPE;
 
+  dbg "Sending ident $mycall";
   # spellWord $mycall;
-  CW::play " ";
-  CW::play $mycall;
-
-  # if {$CFG_TYPE == "Repeater"} {
-  #  playMsg "Core" "repeater";
-  # }
+  playSilence 500;
+  CW::play "$mycall";
   playSilence 500;
 }
 
