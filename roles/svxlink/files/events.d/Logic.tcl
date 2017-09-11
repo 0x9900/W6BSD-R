@@ -48,13 +48,9 @@ variable receiver_on 0;
 # Executed when the SvxLink software is started
 #
 proc startup {} {
-  variable prev_ident;
-  variable need_ident;
   #playMsg "EchoLink" "online";
   send_ident
   # we just identified ourselves, we don't need to re-identify for a while.
-  set prev_ident [clock seconds];
-  set need_ident 0;
 }
 
 #
@@ -72,12 +68,8 @@ proc no_such_module {module_id} {
 # code
 #
 proc manual_identification {} {
-  variable prev_ident;
-  variable need_ident;
   send_ident
   # we just identified ourselves, we don't need to re-identify for a while.
-  set prev_ident [clock seconds];
-  set need_ident 0;
   return 0;
 }
 
@@ -87,13 +79,17 @@ proc manual_identification {} {
 #
 proc send_ident {} {
   global mycall;
-  variable CFG_TYPE;
+  variable prev_ident;
+  variable need_ident;
 
   dbg "Sending ident $mycall";
   # spellWord $mycall;
   playSilence 500;
   CW::play "$mycall";
   playSilence 500;
+
+  set prev_ident [clock seconds];
+  set need_ident 0;
 }
 
 #
@@ -322,9 +318,17 @@ proc addTimerTickSubscriber {func} {
 # Should be executed once every whole minute to check if it is time to
 # identify.
 #
+# In this function we try to send the identification at next_ident
+# time, If there is an ongoing conversation. We hold that
+# identification to avoid doubles.
+#
+# If the identification hasn't been sent 5 minutes after time the
+# identification should have been sent we sent the identification
+# anyway.
+#
 proc checkPeriodicIdentify {} {
-  variable prev_ident;
   variable ident_interval;
+  variable prev_ident;
   variable need_ident;
   variable transmit_on;
   variable receiver_on;
@@ -335,21 +339,25 @@ proc checkPeriodicIdentify {} {
     return;
   }
 
-  dbg "transmit_on $transmit_on";
-  dbg "receiver_on $receiver_on";
+  set next_ident [expr $prev_ident + $ident_interval];
+  set upper_limit [expr $next_ident + 300];
+  set now [clock seconds];
+
+  dbg "PREV $prev_ident, NEXT $next_ident, UPPER $upper_limit, NOW $now";
+  if {$upper_limit <= $now} {
+    puts "$logic_name: Force send identification...";
+    send_ident
+  }
+
+  dbg "transmit_on $transmit_on / receiver_on $receiver_on";
   if {$transmit_on || $receiver_on} {
     return;
   }
 
-  set now [clock seconds];
-
-  if {$prev_ident + $ident_interval <= $now} {
-    puts "$logic_name: Sending identification...";
+  if {$next_ident <= $now} {
+    puts "$logic_name: Send identification...";
     send_ident
-    set prev_ident $now;
-    set need_ident 0;
   }
-  dbg "prev_ident $prev_ident + ident_interval $ident_interval < now $now";
 }
 
 
@@ -436,14 +444,10 @@ proc list_languages {} {
 #
 proc logic_online {online} {
   global mycall
-  variable CFG_TYPE
 
   if {$online} {
     playMsg "Core" "online";
     spellWord $mycall;
-    if {$CFG_TYPE == "Repeater"} {
-      playMsg "Core" "repeater";
-    }
   }
 }
 
