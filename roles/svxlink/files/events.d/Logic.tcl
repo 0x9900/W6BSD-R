@@ -48,8 +48,8 @@ variable receiver_on 0;
 # Executed when the SvxLink software is started
 #
 proc startup {} {
-  #playMsg "EchoLink" "online";
-  send_ident
+  # playMsg "EchoLink" "online";
+  # send_ident
   # we just identified ourselves, we don't need to re-identify for a while.
 }
 
