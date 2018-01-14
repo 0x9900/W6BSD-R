@@ -48,7 +48,7 @@ variable receiver_on 0;
 #
 proc startup {} {
   # playMsg "EchoLink" "online";
-  # send_ident
+  send_ident
   # we just identified ourselves, we don't need to re-identify for a while.
 }
 

@@ -160,8 +160,8 @@ proc play {txt} {
 
 
 # Set defaults
-setPitch 380;
-setAmplitude 200;
-setCpm 100;
+setPitch 800;
+setAmplitude 400;
+setCpm 140;
 
 }

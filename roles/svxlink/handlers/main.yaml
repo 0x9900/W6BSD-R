@@ -3,4 +3,4 @@
 - name: restart svxlink
   service:
     name: svxlink
-    state: restarted
+    state: stopped
