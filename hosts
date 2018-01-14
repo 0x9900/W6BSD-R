@@ -14,3 +14,10 @@
 [all:vars]
 ansible_ssh_user=fred
 ansible_private_key_file=/Users/fred/.ssh/id_rsa
+
+
+# Update the following 2 variables if you want to install svxlink
+# package the alternative would be to install svxlink from the
+# sources.
+install_svxlink=False
+svxlink_module_path=/usr/lib/arm-linux-gnueabihf/svxlink

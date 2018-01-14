@@ -4,16 +4,24 @@
 #
 ---
 
+#
+# By default we expect svxlink to be installed from the sources.
+# Define `install_svxlink` if you want to install the pre-build
+# packages.
 - name: configuring the hamradio repository
   apt_repository:
     repo: 'ppa:felix.lechner/hamradio'
     codename: 'xenial'
     update_cache: yes
+  when:
+    install_svxlink is defined and install_svxlink
 
 - name: Installing svxlink package
   package:
     name: svxlink-server
     state: present
+  when:
+    install_svxlink is defined and install_svxlink
 
 - name: Configure svxlink
   template:

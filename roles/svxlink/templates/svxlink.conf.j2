@@ -5,7 +5,7 @@
 ###########################################################################
 
 [GLOBAL]
-MODULE_PATH=/usr/lib/arm-linux-gnueabihf/svxlink
+MODULE_PATH={{ svxlink_module_path }}
 LOGICS=SimplexLogic
 CFG_DIR=svxlink.d
 TIMESTAMP_FORMAT="%c"
@@ -70,7 +70,7 @@ TIMEOUT=300
 PREEMPHASIS=0
 DTMF_TONE_LENGTH=100
 DTMF_TONE_SPACING=50
-DTMF_TONE_AMP=-18
+DTMF_DIGIT_PWR=-18
 
 [LocationInfo]
 APRS_SERVER_LIST=euro.aprs2.net:14580
